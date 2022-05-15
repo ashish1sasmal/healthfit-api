@@ -1,2 +1,0 @@
-FAILED = "failed"
-SUCCESS = "success"

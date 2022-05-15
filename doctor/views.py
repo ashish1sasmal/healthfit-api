@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import json
 import uuid
+from .quadtree.main import Quadtree, Rectangle
 
 # Create your views here.
 
@@ -40,18 +41,41 @@ def getDoctors(requests):
     data = list(specDb.find().limit(100))
     return JsonResponse(data, safe=False)
 
+def findNearMe(spec,latitude, longitude, w=0.004):
+
+    rect = Rectangle(28.500061, 77.012084, 28.750282, 77.371897)
+    qt = Quadtree(rect)
+    places = list(doctorsDb.find({"main_specialization" : spec}))
+    for i in places:
+        qt.insert(i['clinic_details']['latitude'], i['clinic_details']['longitude'], i)
+
+    range = Rectangle(latitude-w, longitude-w, 2*w, 2*w)
+    points = []
+    qt.nearby(range, points)
+    print(points)
+    ans = []
+    for i in points:
+        ans.append(i.id)
+    return ans
+
 @csrf_exempt
 def searchData(requests):
     if requests.method == "POST":
         data = json.loads(requests.body)
-        resp = doctorsDb.find(
-            {
-                "clinic_details.city" : data["city"],
-                "main_specialization" : data["spec"]
-            }
-        )
+        print(data)
+        if data.get("isNear", False)=="o9n":
+            latitude = data["latitude"]
+            longitude = data["longitude"]
+            resp = findNearMe(data["spec"],latitude, longitude)
+        else:
+            resp = doctorsDb.find(
+                {
+                    "clinic_details.city" : data["city"],
+                    # "main_specialization" : data["spec"]
+                }
+            )
         # print(list(resp))
-        return JsonResponse(list(resp)[:20], safe=False)
+        return JsonResponse(list(resp)[:100], safe=False)
         
     else:
         cities = list(citiesDb.find())

@@ -11,7 +11,7 @@
     <title>Video Chat</title>
     <style>
       body {
-        background-color: rgb(48, 48, 48);
+        /* background-color: rgb(48, 48, 48); */
         overflow: hidden;
       }
 
@@ -37,7 +37,7 @@
         -webkit-transform: translateZ(0);
         box-shadow: 0 19px 51px 0 rgba(0, 0, 0, 0.16), 0 14px 19px 0 rgba(0, 0, 0, 0.07);
         border: 1px solid white;
-        background: rgba(114, 93, 93, 0) !important;
+        /* background: rgba(114, 93, 93, 0) !important; */
       }
 
       .chat-avatar {
@@ -56,7 +56,7 @@
 
       .chat-user-name,
       a {
-        color: black;
+        /* color: black; */
         text-decoration: none;
       }
 
@@ -98,6 +98,68 @@
   </head>
   <body>
     <div>
+      <div class="modal fade" id="waitModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog  modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Waiting List</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table table-hover table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">User</th>
+                    <th scope="col" colspan="2">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="waitlist"></tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" onclick="request(-1, 'accept');" class="btn btn-primary">Admit all</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog  modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Meeting Info</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col-4">
+                  <b>Meeting Code :</b>
+                </div>
+                <div class="col-8">{{room.room_id}}</div>
+              </div>
+              <div class="row">
+                <div class="col-4">
+                  <b>Meeting URL :</b>
+                </div>
+                <div class="col-8">
+                  <a href="{% url 'app:enterRoom' room.room_id %}">{% url 'app:enterRoom' room.room_id %}</a>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <p>Send invite link <i class="far fa-envelope"></i>
+                </p>
+                <div class="col-7">
+                  <input type="email" name="" placeholder="Enter email" id="inviteEmail" class="form-control">
+                </div>
+                <div class="col-4 ms-2">
+                  <button class="btn btn-success" onclick="sendInvite();">Invite</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="row">
         <div class="col">
           <div class="row m-2" id="video-div"></div>
@@ -175,7 +237,7 @@
             </a>
           </li>
           <li class="chat-icon">
-            <a href="" class="nav-link px-2 link-dark" id="">
+            <a href="{% url 'app:home' %}" class="nav-link px-2 link-dark" id="">
               <i class="fas fa-sign-out-alt " style="color: red;"></i>
             </a>
           </li>
@@ -690,6 +752,43 @@ function sendMessage() {
         }, "all", myDetails)
     }
     document.getElementById("inputMsg").value = "";
+}
+
+
+function request(val, action) {
+    if (val == -1) {
+        for (let g in waitList) {
+            alert(g);
+            fetch("{% url 'app:roomResponse' %}?roomid=" + '{{room.room_id}}&userid=' + waitList[g] + "&resp=" + action).then(res => res.json())
+                .then(data => {});
+        }
+        waitList = [];
+        document.getElementById("waitlist").innerHTML = "";
+    } else {
+        fetch("{% url 'app:roomResponse' %}?roomid=" + '{{room.room_id}}&userid=' + val + "&resp=" + action).then(res => res.json())
+            .then(data => {
+
+            });
+        document.getElementById(`w-${val}`).remove();
+    }
+}
+
+
+function sendInvite() {
+    email = document.getElementById("inviteEmail").value;
+    if (email == "") {
+        alert("Invalid email");
+    } else {
+        fetch("{% url 'app:sendInvite' %}?email=" + email + "&room_id={{room.room_id}}").then(res => res.json())
+            .then(data => {
+                console.log(data);
+                if (data.success)
+                    alert(`Successfully send mail to ${email}`)
+                else
+                    alert(`Failed to send mail ${email}`)
+            });
+    }
+    document.getElementById("inviteEmail").value = "";
 }
 
 

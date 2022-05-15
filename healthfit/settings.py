@@ -34,8 +34,8 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'corsheaders',
     'channels',
-    'app',
     'doctor',
+    'payments',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -147,3 +147,5 @@ mongo = MongoClient(CONNECTION_STRING)["healthfit"]
 doctorsDb = mongo["doctors"]
 citiesDb = mongo["cities"]
 specDb = mongo["speciality"]
+paymentsDb = mongo["payments"]
+usersDb = mongo["users"]

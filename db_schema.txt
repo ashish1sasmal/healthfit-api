@@ -1,0 +1,6 @@
+Payments:
+    id
+    appointment_id
+    amount
+    timestamp
+    razorpay_order_id
