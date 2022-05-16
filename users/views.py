@@ -2,9 +2,11 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from passlib.hash import pbkdf2_sha256
-from healthfit.settings import usersDb
+import razorpay
+from healthfit.settings import usersDb, consultDb
 import uuid
 from django.views.decorators.csrf import csrf_exempt
+from datetime import datetime
 # Create your views here.
 
 
@@ -51,3 +53,30 @@ def login(request):
                 return JsonResponse({"status": -1, "msg": "Wrong email or password"}, safe=False)
         else:
             return JsonResponse({"status": -1, "msg":"User not found"}, safe=False)
+
+
+
+@csrf_exempt
+def startAppointment(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        name = data.get("name")
+        mobile = data.get("mobile")
+        symptoms = data.get("symptoms")
+        spec = data.get("spec")
+        pay_id = data.get("pay_id")
+        appmt_id = str(uuid.uuid4())[-12:]
+        user_id = data.get("user_id")
+        data = {
+            "created_at": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+            "appmt_id" : appmt_id,
+            "p_name" : name,
+            "p_mobile" : mobile,
+            "symptoms" : symptoms,
+            "spec" : spec,
+            "payment_id" : pay_id,
+            "user_id" : user_id,
+            "complete": False
+        }
+        consultDb.insert_one(data)
+        return JsonResponse({"status" : 1, "data": data}, safe=False)
