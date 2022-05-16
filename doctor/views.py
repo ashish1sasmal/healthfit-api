@@ -10,6 +10,7 @@ from .quadtree.main import Quadtree, Rectangle
 from healthfit.settings import doctorsDb, citiesDb, specDb
 
 import json
+import random as rd
 
 
 
@@ -41,7 +42,7 @@ def getDoctors(requests):
     data = list(specDb.find().limit(100))
     return JsonResponse(data, safe=False)
 
-def findNearMe(spec,latitude, longitude, w=0.004):
+def findNearMe(spec,latitude, longitude, w=0.03):
 
     rect = Rectangle(28.500061, 77.012084, 28.750282, 77.371897)
     qt = Quadtree(rect)
@@ -62,20 +63,29 @@ def findNearMe(spec,latitude, longitude, w=0.004):
 def searchData(requests):
     if requests.method == "POST":
         data = json.loads(requests.body)
+        currPage = data.get("currPage")
         print(data)
-        if data.get("isNear", False)=="o9n":
-            latitude = data["latitude"]
-            longitude = data["longitude"]
-            resp = findNearMe(data["spec"],latitude, longitude)
+        filter = {}
+        if not data.get("nearBy"):
+            filter["clinic_details.city"] = data.get("city")
         else:
-            resp = doctorsDb.find(
-                {
-                    "clinic_details.city" : data["city"],
-                    # "main_specialization" : data["spec"]
-                }
-            )
-        # print(list(resp))
-        return JsonResponse(list(resp)[:100], safe=False)
+            latitude = data.get("coordinates").get("latitude")
+            longitude = data.get("coordinates").get("longitude")
+            filter["clinic_details.latitude"] = {"$gte" : latitude-0.05, "$lte" : latitude+0.05 }
+            filter["clinic_details.longitude"] = {"$gte" : longitude-0.05, "$lte" : longitude+0.05 }
+        
+        if data.get("spec"):
+            filter["main_specialization"] = data.get("spec")
+        print(filter)
+
+        # nearestSort = data.get("sortBy") == "nearest"
+        # ratingsSort = data.get() == "ratings"
+        resp = list(doctorsDb.find( filter ))
+        rd.shuffle(resp)
+        if data.get("sortBy") == "nearest":
+            points = findNearMe(resp, latitude, longitude)
+            print(points)
+        return JsonResponse(list(resp)[10*(currPage-1):10*currPage], safe=False)
         
     else:
         cities = list(citiesDb.find())
