@@ -7,6 +7,7 @@ from healthfit.settings import usersDb, consultDb
 import uuid
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
+
 # Create your views here.
 
 
@@ -22,18 +23,23 @@ def signup(request):
         hash = pbkdf2_sha256.hash(password)
         auth_token = str(uuid.uuid4())
         res = usersDb.find({"email": email})
-        if not(list(res)):
-            resp = usersDb.insert_one({
-                "_id": str(uuid.uuid4())[-12:],
-                "full_name": full_name,
-                "email": email,
-                "mobile": mobile,
-                "hash_password" : hash,
-                "auth_token" : auth_token
-            })
+        if not (list(res)):
+            resp = usersDb.insert_one(
+                {
+                    "_id": str(uuid.uuid4())[-12:],
+                    "full_name": full_name,
+                    "email": email,
+                    "mobile": mobile,
+                    "hash_password": hash,
+                    "auth_token": auth_token,
+                }
+            )
             return JsonResponse({"status": 1}, safe=False)
         else:
-            return JsonResponse({"status": -1, "msg":"User already present"}, safe=False)
+            return JsonResponse(
+                {"status": -1, "msg": "User already present"}, safe=False
+            )
+
 
 @csrf_exempt
 def login(request):
@@ -45,15 +51,16 @@ def login(request):
         res = list(usersDb.find({"email": email}))
         if res:
             res = res[0]
-            auth = pbkdf2_sha256.verify(password, res.pop('hash_password'))
+            auth = pbkdf2_sha256.verify(password, res.pop("hash_password"))
             if auth:
 
-                return JsonResponse({"status":1, "user":res}, safe=False)
+                return JsonResponse({"status": 1, "user": res}, safe=False)
             else:
-                return JsonResponse({"status": -1, "msg": "Wrong email or password"}, safe=False)
+                return JsonResponse(
+                    {"status": -1, "msg": "Wrong email or password"}, safe=False
+                )
         else:
-            return JsonResponse({"status": -1, "msg":"User not found"}, safe=False)
-
+            return JsonResponse({"status": -1, "msg": "User not found"}, safe=False)
 
 
 @csrf_exempt
@@ -69,14 +76,14 @@ def startAppointment(request):
         user_id = data.get("user_id")
         data = {
             "created_at": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-            "appmt_id" : appmt_id,
-            "p_name" : name,
-            "p_mobile" : mobile,
-            "symptoms" : symptoms,
-            "spec" : spec,
-            "payment_id" : pay_id,
-            "user_id" : user_id,
-            "complete": False
+            "appmt_id": appmt_id,
+            "p_name": name,
+            "p_mobile": mobile,
+            "symptoms": symptoms,
+            "spec": spec,
+            "payment_id": pay_id,
+            "user_id": user_id,
+            "complete": False,
         }
         consultDb.insert_one(data)
-        return JsonResponse({"status" : 1, "data": data}, safe=False)
+        return JsonResponse({"status": 1, "data": data}, safe=False)
