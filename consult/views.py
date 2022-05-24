@@ -19,6 +19,8 @@ from healthfit.utils import login_required
 @login_required
 def payments(request):
     data = json.loads(request.body)
+    user = request.user
+    print(user)
     print(data)
     amount = 50000
     name = data.get("name")
@@ -53,16 +55,15 @@ def payments(request):
             )
             print(resp)
             appmt_id = str(uuid.uuid4())[-12:]
-            user_id = data.get("user_id")
             data = {
                 "_id": appmt_id,
-                "created_at": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
                 "p_name": name,
                 "p_mobile": mobile,
                 "symptoms": symptoms,
                 "spec": spec,
                 "payment_id": pay_id,
-                "user_id": user_id,
+                "user_id": user.get("_id") if user else None,
                 "completed": False,
                 "active": True,
             }
@@ -85,6 +86,7 @@ def payments(request):
 @csrf_exempt
 @login_required
 def getApmtDetails(request, apmt_id):
+    print(request.user)
     res = list(consultDb.find({"_id": apmt_id}))
     if res:
         return JsonResponse({"data": res[0], "status": 1}, safe=False)
@@ -93,33 +95,40 @@ def getApmtDetails(request, apmt_id):
 
 
 @csrf_exempt
+@login_required
 def endConsult(request, apmt_id):
+    user = request.user
     if request.method == "POST":
         data = json.loads(request.body)
         print(data)
         apmt = list(consultDb.find({"_id": apmt_id}))[0]
         duration = data.get("duration")
         tech_ratings = {
-            "_id": str(uuid.uuid4())[-12:],
-            "video": data.get("video_rating"),
-            "audio": data.get("audio_rating"),
+            "video": max(1, min(int(data.get("video_rating", 10)), 10), 1),
+            "audio": max(1, min(int(data.get("audio_rating", 10)), 10), 1),
         }
         doc_ratings = {
+            "_id": str(uuid.uuid4())[-12:],
             "doc_id": apmt.get("doctor").get("_id"),
-            "user_id": "",
-            "rating": data.get("doc_rating"),
+            "user_id": user.get("_id"),
+            "rating": max(1, min(int(data.get("doc_rating", 10)), 10), 1),
             "review": data.get("review"),
         }
+
+        change = {
+                    "tech_ratings": tech_ratings,
+                    "duration": duration,
+                    "completed": True,
+                    "end_time" :  datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+                }
+        if apmt.get("ended_by")==None:
+            change["ended_by"] = user
+
 
         consultDb.update_one(
             {"_id": apmt.get("_id")},
             {
-                "$set": {
-                    "tech_ratings": tech_ratings,
-                    "duration": duration,
-                    "complete": True,
-                    "active": False,
-                }
+                "$set": change
             },
         )
         ratingsDb.insert_one(doc_ratings)
@@ -130,4 +139,18 @@ def endConsult(request, apmt_id):
 @login_required
 def currentConsult(request):
     consults = list(consultDb.find({"complete": False}))
+    print(consults)
     return JsonResponse({"status": 1, "consults": consults}, safe=False)
+
+@login_required
+def allAppointments(request):
+    doc_id = request.GET.get("doc_id")
+    user_id = request.GET.get("user_id")
+    filter = {}
+    if doc_id:
+        filter["doctor.user"] = doc_id
+    if user_id:
+        filter["user_id"] = user_id
+    res = list(consultDb.find(filter))
+    print(res)
+    return JsonResponse({"status" : 1, "data": res}, safe=False)

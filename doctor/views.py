@@ -45,20 +45,24 @@ def doctorRegister(request):
         # doctorsDb.update_many({}, {"$set" : {"user" : "cf00b4ba658c"}})
         # ratingsDb.delete_many({})
         # consultDb.delete_many({})
-        all = [doctorsDb, citiesDb, specDb, paymentsDb, usersDb, consultDb, ratingsDb]
-        k = {"int" : "Integer", "str" : "String", "dict" : "Object", "float" : "Decimal", "bool" : "Boolean", "NoneType" : "null", "list" : "Array", 'ObjectId' : "String", 'Int64' : "Integer", "datetime" : "Datetime"}
-        g = ratingsDb.find_one()
-        # print(str(i))
-        print()
-        for j in g:
-            print("\t",hee(j, 20), ": ",hee(k[type(g[j]).__name__], 10))
-        print()
+        # all = [doctorsDb, citiesDb, specDb, paymentsDb, usersDb, consultDb, ratingsDb]
+        # k = {"int" : "Integer", "str" : "String", "dict" : "Object", "float" : "Decimal", "bool" : "Boolean", "NoneType" : "null", "list" : "Array", 'ObjectId' : "String", 'Int64' : "Integer", "datetime" : "Datetime"}
+        # g = ratingsDb.find_one()
+        # # print(str(i))
+        # print()
+        # for j in g:
+        #     print("\t",hee(j, 20), ": ",hee(k[type(g[j]).__name__], 10))
+        # print()
+        doctorsDb.update_many({}, {"$set" : {"online" : False, "active" : True}})
         return JsonResponse({})
 
 
 def getDoctor(requests, doc_id):
-    data = list(doctorsDb.find({"_id": doc_id}))[0]
-    return JsonResponse(data, safe=False)
+    data = list(doctorsDb.find({"_id": doc_id}))
+    if data:
+        return JsonResponse({"status" : 1, "data":data[0]}, safe=False)
+    else:
+        return JsonResponse({"status" : -1, "msg":"Doctor Not Found"}, safe=False)
 
 
 def findNearMe(places, latitude, longitude, w=0.006):
@@ -96,6 +100,7 @@ def searchData(requests):
 
         if data.get("spec"):
             filter["main_specialization"] = data.get("spec")
+        filter = {"_id" : "cf00b4ba658c"}
         resp = list(doctorsDb.find(filter))
         rd.shuffle(resp)
         if data.get("sortBy") == "nearest":
@@ -123,15 +128,53 @@ def addDoctor(request):
         data = json.loads(request.body)
         appmt_id = data.get("apmt_id")
         doc_id = data.get("doc_id")
-        doctor = list(doctorsDb.find({"_id": doc_id}))[0]
-        appmt = consultDb.update_one({"_id": appmt_id}, {"$set": {"doctor": doctor}})
-        return JsonResponse({"status": 1}, safe=False)
+        doctor = list(doctorsDb.find({"_id": doc_id}))
+        if doctor:
+            appmt = consultDb.update_one({"_id": appmt_id}, {"$set": {"doctor": doctor[0]}})
+            return JsonResponse({"status": 1}, safe=False)
+        else:
+            return JsonResponse({"status" : -1, "msg" : "Doctor not found"})
 
+from datetime import datetime
 
 @login_required
 def getDashboard(request, doc_id):
     ratings = list(ratingsDb.find({"doc_id": doc_id}))
-    consult = list(consultDb.find({"doctor._id": doc_id, "complete": False}))
+    consult = list(consultDb.find({"doctor.user": doc_id, "completed": False}))
+    "05/24/2022, 05:38:18"
+    res = []
+    for i in consult:
+        timediff = ((datetime.now()-datetime.strptime(i["created_at"], "%d/%m/%Y, %H:%M:%S")).total_seconds())
+        if timediff < 30*60:
+            i["current"] = True
+            res.append(i)
+        else:
+            consultDb.update_one({"_id" : i["_id"]}, {"$set":{ "completed" : True }})
+
     return JsonResponse(
-        {"status": 1, "ratings": ratings, "consult": consult}, safe=False
+        {"status": 1, "ratings": ratings, "consult": res}, safe=False
     )
+
+def checkDoc(doc_id):
+    res = doctorsDb.find({"_id": doc_id})
+    if res:
+        return res[0]
+
+@login_required
+@csrf_exempt
+def updateDocStatus(request, doc_id):
+    user = request.user
+    if request.method == "POST":
+        doc = checkDoc(doc_id)
+        if doc:
+            if doc.get("user") == user.get("_id"):
+                data = json.loads(request.body)
+                print(data)
+                online = data.get("online", False)
+                active = data.get("active", False)
+                doctorsDb.update_one({"_id" : doc_id}, {"$set" : {"online" : online, "active" : active}})
+                return JsonResponse({"status" : 1}, safe=False)
+            else:
+                return JsonResponse({"status" : 403, "msg" : "Not Authorized"}, safe=False)
+        else:
+            return JsonResponse({"status" : 404, "msg" : "Doctor not found"}, safe=False)
