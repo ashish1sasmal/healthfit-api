@@ -94,6 +94,8 @@ def searchData(requests):
         else:
             latitude = data.get("coordinates").get("latitude")
             longitude = data.get("coordinates").get("longitude")
+            # latitude = 28.594983
+            # longitude = 77.019331
             print(latitude, longitude)
             w = 0.01
             filter["clinic_details.latitude"] = {"$gte" : latitude-w, "$lte" : latitude+w }
@@ -104,6 +106,7 @@ def searchData(requests):
         if data.get("available"):
             filter["active"] = True
         # filter = {"_id" : "cf00b4ba658c"}
+        print(filter)
         resp = list(doctorsDb.find(filter))
         rd.shuffle(resp)
         if data.get("sortBy") == "nearest":

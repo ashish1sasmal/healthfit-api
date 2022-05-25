@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import pymongo
 
-CONNECTION_STRING = "mongodb+srv://ashish:ashish@personal.rkulj.mongodb.net/?retryWrites=true&w=majority"
+CONNECTION_STRING = ""
 from pymongo import MongoClient
 
 mongo = MongoClient(CONNECTION_STRING)["healthfit"]
@@ -12,13 +12,13 @@ specDb = mongo["speciality"]
 
 import json
 
-f = open("THE_DATA/cities")
-data = json.load(f)
-citiesDb.insert_many(data)
+# f = open("THE_DATA/cities")
+# data = json.load(f)
+# citiesDb.insert_many(data)
 
-f = open("THE_DATA/speciality")
-data = json.load(f)
-specDb.insert_many(data)
+# f = open("THE_DATA/speciality")
+# data = json.load(f)
+# specDb.insert_many(data)
 
 # c = 0
 # for i in range(20):
@@ -29,3 +29,7 @@ specDb.insert_many(data)
 #     c+=len(data)
 # # doctorsDb.delete_many({})
 # print(c)
+
+f = open(f'doctors')
+data = json.load(f)
+doctorsDb.insert_many(data)

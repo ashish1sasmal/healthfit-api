@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 import os
 from pathlib import Path
+import django_heroku
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-)28t)hwoeqgc#p-=yad6bj(jvx%5^y-(4hqm9*rthv&m$63y2n"
+SECRET_KEY = os.environ.get("HEALTHFIT_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -150,3 +151,4 @@ paymentsDb = mongo["payments"]
 usersDb = mongo["users"]
 consultDb = mongo["consultDb"]
 ratingsDb = mongo["ratingsDb"]
+django_heroku.settings(locals())
