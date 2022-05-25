@@ -53,7 +53,7 @@ def doctorRegister(request):
         # for j in g:
         #     print("\t",hee(j, 20), ": ",hee(k[type(g[j]).__name__], 10))
         # print()
-        doctorsDb.update_many({}, {"$set" : {"online" : False, "active" : True}})
+        # doctorsDb.update_many({}, {"$set" : {"online" : False, "active" : True}})
         return JsonResponse({})
 
 
@@ -86,6 +86,7 @@ def findNearMe(places, latitude, longitude, w=0.006):
 def searchData(requests):
     if requests.method == "POST":
         data = json.loads(requests.body)
+        print(data)
         currPage = data.get("currPage")
         filter = {}
         if not data.get("nearBy"):
@@ -100,7 +101,9 @@ def searchData(requests):
 
         if data.get("spec"):
             filter["main_specialization"] = data.get("spec")
-        filter = {"_id" : "cf00b4ba658c"}
+        if data.get("available"):
+            filter["active"] = True
+        # filter = {"_id" : "cf00b4ba658c"}
         resp = list(doctorsDb.find(filter))
         rd.shuffle(resp)
         if data.get("sortBy") == "nearest":
