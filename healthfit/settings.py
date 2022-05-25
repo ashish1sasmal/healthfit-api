@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -136,7 +137,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 from pymongo import MongoClient
 import pymongo
 
-CONNECTION_STRING = "mongodb://localhost:27017"
+# CONNECTION_STRING = "mongodb://localhost:27017"
+CONNECTION_STRING = os.environ.get("MONGO_HEALTHFIT")
 from pymongo import MongoClient
 
 mongo = MongoClient(CONNECTION_STRING)["healthfit"]

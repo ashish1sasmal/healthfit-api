@@ -13,75 +13,79 @@ cities = json.load(open("cities.json"))
 
 c = 0
 r = 0
+er = set()
 
 d = []
 i = 0
+k = 0
 for j in cities:
     if j["state"] == "New Delhi":
-        print(j)
-        if c>10000:
-            obj = json.dumps(d)
-            with open(f"THE_DATA/sample{r}.json", "w") as outfile:
-                outfile.write(obj)
-            d = []
-            c = 0
-            r +=1
-            print("saved", r)
-        for t in spec:
-            for i in range(20):
-                d.append({
-                "_id" : str(uuid.uuid4())[-12:],
-                "name" : random.choice(persons)["name"],
-                "main_specialization" : t,
-                "specializations" : [
-                    random.choice(spec),
-                    random.choice(spec),
-                    random.choice(spec)
-                ],
-                "yoe": random.randint(1, 20),
-                "about": random.choice(persons)["about"],
-                "clinic_details": {
-                    "name" : random.choice(clinics),
-                    "address_line_1":random.choice(persons)["address"],
-                    "city" : j["city"],
-                    "state" : j["state"],
-                    "pincode" : j["pincode"],
-                    "latitude" : j["lat"] + round(random.uniform(0.0001, 0.0009), 6),
-                    "longitude" : j["long"] + round(random.uniform(0.0001, 0.0009), 6)
-                },
-                "timings" : [
-                    {
-                        "start" : "9:00 AM",
-                        "end" : "2:00 PM"
+        if j["city"] not in er:
+            print(j["city"])
+            er.add(j["city"])
+            if c>10000:
+                obj = json.dumps(d)
+                with open(f"THE_DATA/sample{r}.json", "w") as outfile:
+                    outfile.write(obj)
+                d = []
+                c = 0
+                r +=1
+                print("saved", r)
+            for t in spec:
+                for i in range(30):
+                    d.append({
+                    "_id" : str(uuid.uuid4())[-12:],
+                    "name" : random.choice(persons)["name"],
+                    "main_specialization" : t,
+                    "specializations" : [
+                        random.choice(spec),
+                        random.choice(spec),
+                        random.choice(spec)
+                    ],
+                    "yoe": random.randint(1, 20),
+                    "about": random.choice(persons)["about"],
+                    "clinic_details": {
+                        "name" : random.choice(clinics),
+                        "address_line_1":random.choice(persons)["address"],
+                        "city" : j["city"],
+                        "state" : j["state"],
+                        "pincode" : j["pincode"],
+                        "latitude" : j["lat"] + round(random.uniform(0.0001, 0.0009), 6),
+                        "longitude" : j["long"] + round(random.uniform(0.0001, 0.0009), 6)
                     },
-                    {
-                        "start" : "9:00 PM",
-                        "end" : "11:00 PM"
-                    }
-                ],
-                "fees" : 800,
-                "services" : [
-                    "Crowns and Bridges Fixing",
-                    "Dental Fillings",
-                    "Teeth Whitening"
-                ],
-                "awards_recognitions" : [
-                    "1-Has Won Various Prizes In National Paper",
-                    "Gold Medalist In Endodontics - 2016",
-                    "Director Of Pragati Pathik NGO For Dental Services - 2017"
-                ],
-                "education":[
-                    random.choice(persons)["education"]
-                ],
-                "work_experience" : [
-                    random.choice(clinics),
-                    random.choice(clinics)
-                ],
-                "phone": random.choice(persons)["phone"],
-                "email" : random.choice(persons)["email"],
-                "profile_pic" : "http://themepure.net/template/medifine-demo/medifine/img/team/doctor-single.jpg"
-            })
-            c+=1
+                    "timings" : [
+                        {
+                            "start" : "9:00 AM",
+                            "end" : "2:00 PM"
+                        },
+                        {
+                            "start" : "9:00 PM",
+                            "end" : "11:00 PM"
+                        }
+                    ],
+                    "fees" : 800,
+                    "services" : [
+                        "Crowns and Bridges Fixing",
+                        "Dental Fillings",
+                        "Teeth Whitening"
+                    ],
+                    "awards_recognitions" : [
+                        "1-Has Won Various Prizes In National Paper",
+                        "Gold Medalist In Endodontics - 2016",
+                        "Director Of Pragati Pathik NGO For Dental Services - 2017"
+                    ],
+                    "education":[
+                        random.choice(persons)["education"]
+                    ],
+                    "work_experience" : [
+                        random.choice(clinics),
+                        random.choice(clinics)
+                    ],
+                    "phone": random.choice(persons)["phone"],
+                    "email" : random.choice(persons)["email"],
+                    "profile_pic" : "http://themepure.net/template/medifine-demo/medifine/img/team/doctor-single.jpg"
+                })
+                    c+=1
 
 if c>0:
     obj = json.dumps(d)
