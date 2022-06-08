@@ -9,7 +9,6 @@ def login_required(func):
     def wrap(request, *args, **kwargs):
         user = list(usersDb.find({"auth_token": request.headers.get("Auth-token")}))
         if user:
-            print("hi")
             request.user = user[0]
             return func(request, *args, **kwargs)
         else:

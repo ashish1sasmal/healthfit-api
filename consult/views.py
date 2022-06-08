@@ -17,17 +17,8 @@ from healthfit.utils import login_required
 
 @csrf_exempt
 @login_required
-def payments(request):
-    data = json.loads(request.body)
-    user = request.user
-    print(user)
-    print(data)
+def payments(request, apmt_id):
     amount = 50000
-    name = data.get("name")
-    spec = data.get("spec")
-    mobile = data.get("mobile")
-    symptoms = data.get("symptoms")
-    doc_id = data.get("doc_id")
     currency = "INR"
     try:
         razorpay_client = razorpay.Client(
@@ -53,27 +44,20 @@ def payments(request):
                     "created_at": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                 }
             )
-            print(resp)
-            appmt_id = str(uuid.uuid4())[-12:]
             data = {
-                "_id": appmt_id,
-                "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
-                "p_name": name,
-                "p_mobile": mobile,
-                "symptoms": symptoms,
-                "spec": spec,
-                "payment_id": pay_id,
-                "user_id": user.get("_id") if user else None,
                 "completed": False,
                 "active": True,
             }
-            if doc_id:
-                doc_details = doctorsDb.find({"_id": doc_id})
-                data["doctor"] = doc_details
-            data["razorpay_order_id"] = razorpay_order_id
+            data["razorpay_order_id"    ] = razorpay_order_id
+            consultDb.update_one(
+                {"_id": apmt_id},
+                {
+                    "$set": data
+                },
+            )
+            data = consultDb.find({"_id" : apmt_id})
             print(data)
-            consultDb.insert_one(data)
-            return JsonResponse({"status": 1, "data": data}, safe=False)
+            return JsonResponse({"status": 1, "data": data[0]}, safe=False)
         else:
             return JsonResponse(
                 {"status": -1, "msg": "Payment not successful"}, safe=False
@@ -81,6 +65,31 @@ def payments(request):
     except Exception as err:
         print(str(err))
         return JsonResponse({"status": -1, "msg": "Payment not successful"}, safe=False)
+
+@csrf_exempt
+@login_required
+def updateConsult(request, apmt_id):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        print(data)
+        doc_id = data.get("doc_id")
+        if data.get("doc_id"):
+            doctor = list(doctorsDb.find({"_id": doc_id}))
+            print(doctor)
+            if doctor:
+                data["doctor"] = doctor[0]
+                data.pop("doc_id")
+            else:
+                return JsonResponse({"status": -1, "msg": "Doctor not found."}, safe=False)
+        consultDb.update_one(
+            {"_id": apmt_id},
+            {
+                "$set": data
+            },
+        )
+        data = consultDb.find({"_id" : apmt_id})[0]
+        return JsonResponse({"status": 1, "data" : data}, safe=False)
+            
 
 
 @csrf_exempt
@@ -93,6 +102,17 @@ def getApmtDetails(request, apmt_id):
     else:
         return JsonResponse({"status": -1}, safe=False)
 
+@csrf_exempt
+@login_required
+def startConsult(request):
+    if request.method == "POST":
+        appmt_id = str(uuid.uuid4())[-12:]
+        data = {
+            "_id": appmt_id,
+            "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        }
+        consultDb.insert_one(data)
+        return JsonResponse({"status": 1, "data": data}, safe=False)
 
 @csrf_exempt
 @login_required

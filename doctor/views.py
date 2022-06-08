@@ -105,7 +105,7 @@ def searchData(requests):
             filter["main_specialization"] = data.get("spec")
         if data.get("available"):
             filter["active"] = True
-        # filter = {"_id" : "cf00b4ba658c"}
+        filter = {"_id" : "c4ca06e2486e"}
         print(filter)
         resp = list(doctorsDb.find(filter))
         rd.shuffle(resp)
