@@ -47,6 +47,7 @@ def payments(request, apmt_id):
             data = {
                 "completed": False,
                 "active": True,
+                "start_time" : datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
             }
             data["razorpay_order_id"    ] = razorpay_order_id
             consultDb.update_one(
@@ -109,7 +110,10 @@ def startConsult(request):
         appmt_id = str(uuid.uuid4())[-12:]
         data = {
             "_id": appmt_id,
-            "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
+            "completed" : False,
+            "active" : False,
+            "user" : request.user.get("_id")
         }
         consultDb.insert_one(data)
         return JsonResponse({"status": 1, "data": data}, safe=False)
@@ -166,11 +170,16 @@ def currentConsult(request):
 def allAppointments(request):
     doc_id = request.GET.get("doc_id")
     user_id = request.GET.get("user_id")
-    filter = {}
+    filter = {"active" : True}
     if doc_id:
         filter["doctor.user"] = doc_id
     if user_id:
-        filter["user_id"] = user_id
+        filter["user"] = user_id
+    res = list(consultDb.find(filter))
+    for i in res:
+        diff = (datetime.now() - datetime.strptime(i.get("start_time"), "%d/%m/%Y, %H:%M:%S"))
+        if diff.total_seconds()/60 > 30:
+            consultDb.update_one({"_id" : i["_id"]}, {"$set" : {"completed" : True}})
     res = list(consultDb.find(filter))
     print(res)
     return JsonResponse({"status" : 1, "data": res}, safe=False)

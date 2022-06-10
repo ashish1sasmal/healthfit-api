@@ -58,7 +58,7 @@ def doctorRegister(request):
 
 
 def getDoctor(requests, doc_id):
-    data = list(doctorsDb.find({"_id": doc_id}))
+    data = list(doctorsDb.find({"user": doc_id}))
     if data:
         return JsonResponse({"status" : 1, "data":data[0]}, safe=False)
     else:
