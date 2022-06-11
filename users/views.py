@@ -8,10 +8,13 @@ import uuid
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 
+from healthfit.utils import shield
+
 # Create your views here.
 
 
 @csrf_exempt
+@shield
 def signup(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -42,6 +45,7 @@ def signup(request):
 
 
 @csrf_exempt
+@shield
 def login(request):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -64,6 +68,7 @@ def login(request):
 
 
 @csrf_exempt
+@shield
 def startAppointment(request):
     if request.method == "POST":
         data = json.loads(request.body)

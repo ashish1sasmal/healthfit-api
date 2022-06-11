@@ -10,13 +10,14 @@ from datetime import datetime
 import os
 import requests
 
-from healthfit.utils import login_required
+from healthfit.utils import login_required, shield
 
 # Create your views here.
 
 
 @csrf_exempt
 @login_required
+@shield
 def payments(request, apmt_id):
     amount = 50000
     currency = "INR"
@@ -69,6 +70,7 @@ def payments(request, apmt_id):
 
 @csrf_exempt
 @login_required
+@shield
 def updateConsult(request, apmt_id):
     if request.method == "POST":
         data = json.loads(request.body)
@@ -95,16 +97,18 @@ def updateConsult(request, apmt_id):
 
 @csrf_exempt
 @login_required
+@shield
 def getApmtDetails(request, apmt_id):
     print(request.user)
     res = list(consultDb.find({"_id": apmt_id}))
     if res:
         return JsonResponse({"data": res[0], "status": 1}, safe=False)
     else:
-        return JsonResponse({"status": -1}, safe=False)
+        return JsonResponse({"status": -1, "msg" : "Error occured while fetching appointment details."}, safe=False)
 
 @csrf_exempt
 @login_required
+@shield
 def startConsult(request):
     if request.method == "POST":
         appmt_id = str(uuid.uuid4())[-12:]
@@ -120,6 +124,7 @@ def startConsult(request):
 
 @csrf_exempt
 @login_required
+@shield
 def endConsult(request, apmt_id):
     user = request.user
     if request.method == "POST":
@@ -161,12 +166,15 @@ def endConsult(request, apmt_id):
 
 @csrf_exempt
 @login_required
+@shield
 def currentConsult(request):
     consults = list(consultDb.find({"complete": False}))
     print(consults)
     return JsonResponse({"status": 1, "consults": consults}, safe=False)
 
 @login_required
+@shield
+@shield
 def allAppointments(request):
     doc_id = request.GET.get("doc_id")
     user_id = request.GET.get("user_id")
@@ -188,6 +196,7 @@ from django.core.files.storage import FileSystemStorage
 
 @csrf_exempt
 @login_required
+@shield
 def uploadFile(request):
     if request.method == "POST":
         myfile = request.FILES['my_file']

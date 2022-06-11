@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import uuid
 
-from healthfit.utils import login_required
+from healthfit.utils import login_required, shield
 from .quadtree.main import Quadtree, Rectangle
 
 # Create your views here.
@@ -19,6 +19,7 @@ def hee(s, n):
     return s + " "*(n-len(s))
 
 @csrf_exempt
+@shield
 def doctorRegister(request):
         # for i in range(73):
         #     data = json.load(open(f"THE_DATA/sample{i}.json"))
@@ -83,7 +84,7 @@ def doctorRegister(request):
         # doctorsDb.update_many({}, {"$set" : {"online" : False, "active" : True}})
         return JsonResponse({})
 
-
+@shield
 def getDoctor(requests, doc_id):
     print(doc_id)
     data = list(doctorsDb.find({"_id": doc_id}))
@@ -112,6 +113,7 @@ def findNearMe(places, latitude, longitude, w=0.006):
 
 
 @csrf_exempt
+@shield
 def searchData(requests):
     if requests.method == "POST":
         data = json.loads(requests.body)
@@ -160,6 +162,8 @@ def searchData(requests):
 
 
 @csrf_exempt
+@login_required
+@shield
 def addDoctor(request):
     if request.method == "POST":
         print(request.body)
@@ -176,6 +180,7 @@ def addDoctor(request):
 from datetime import datetime
 
 @login_required
+@shield
 def getDashboard(request, doc_id):
     ratings = list(ratingsDb.find({"doc_id": doc_id}))
     consult = list(consultDb.find({"doctor.user": doc_id, "completed": False}))
@@ -200,6 +205,7 @@ def checkDoc(doc_id):
 
 @login_required
 @csrf_exempt
+@shield
 def updateDocStatus(request, doc_id):
     user = request.user
     if request.method == "POST":
@@ -219,6 +225,7 @@ def updateDocStatus(request, doc_id):
 
 
 @csrf_exempt
+@shield
 def getReviews(request, doc_id):
     print(doc_id)
     res = list(ratingsDb.find({"doc_id" : doc_id}))
@@ -227,6 +234,7 @@ def getReviews(request, doc_id):
 import re
 
 @csrf_exempt
+@shield
 def getDoctorsByName(request):
     query = request.GET.get("query","").title()
     search_expr = re.compile(f"^{query}")

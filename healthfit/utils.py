@@ -15,3 +15,14 @@ def login_required(func):
             return JsonResponse({"status": 403, "msg": "User not authorized"})
 
     return wrap
+
+def shield(func):
+    @wraps(func)
+    def wrap(request, *args, **kwargs):
+        try:
+            return func(request, *args, **kwargs)
+        except Exception as err:
+            print(str(err))
+            return JsonResponse({"status": -1, "msg": "Something went wrong"})
+    
+    return wrap
