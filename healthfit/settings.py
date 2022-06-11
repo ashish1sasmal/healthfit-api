@@ -151,4 +151,5 @@ paymentsDb = mongo["payments"]
 usersDb = mongo["users"]
 consultDb = mongo["consultDb"]
 ratingsDb = mongo["ratingsDb"]
+doctorNamesDb = mongo["doctorNamesDb"]
 django_heroku.settings(locals())

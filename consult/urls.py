@@ -10,6 +10,7 @@ urlpatterns = [
     path("save/<str:apmt_id>", views.endConsult),
     path("current", views.currentConsult),
     path("start/", views.startConsult),
-    path("update/<str:apmt_id>", views.updateConsult)
+    path("update/<str:apmt_id>", views.updateConsult),
+    path("upload/", views.uploadFile)
     
 ]

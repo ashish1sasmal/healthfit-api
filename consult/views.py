@@ -183,3 +183,15 @@ def allAppointments(request):
     res = list(consultDb.find(filter))
     print(res)
     return JsonResponse({"status" : 1, "data": res}, safe=False)
+
+from django.core.files.storage import FileSystemStorage
+
+@csrf_exempt
+@login_required
+def uploadFile(request):
+    if request.method == "POST":
+        myfile = request.FILES['my_file']
+        fs = FileSystemStorage()
+        filename = fs.save("files/"+str(uuid.uuid4())[-12:]+"."+myfile.name.split(".")[-1], myfile)
+        uploaded_file_url = os.environ.get("HOST", "/") + fs.url(filename)
+        return JsonResponse({"status" : 1, "link" : uploaded_file_url, "filename" : myfile.name})
