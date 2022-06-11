@@ -98,7 +98,7 @@ def doctorRegister(request):
 @shield
 def getDoctor(requests, doc_id):
     print(doc_id)
-    data = list(doctorsDb.find({"_id": doc_id}))
+    data = list(doctorsDb.find({"$or" : [{"_id": doc_id}, {"user": doc_id}]}))
     print(data)
     if data:
         return JsonResponse({"status": 1, "data": data[0]}, safe=False)
@@ -128,10 +128,8 @@ def findNearMe(places, latitude, longitude, w=0.006):
 def searchData(requests):
     if requests.method == "POST":
         data = json.loads(requests.body)
-        print(data)
         currPage = data.get("currPage")
         filter = {}
-        print(data)
         if data.get("doc_name"):
             filter["name"] = data.get("doc_name")
         elif not data.get("nearBy"):
@@ -139,8 +137,6 @@ def searchData(requests):
         else:
             latitude = data.get("coordinates").get("latitude")
             longitude = data.get("coordinates").get("longitude")
-            # latitude = 28.594983
-            # longitude = 77.019331
             print(latitude, longitude)
             w = 0.01
             filter["clinic_details.latitude"] = {
@@ -156,14 +152,12 @@ def searchData(requests):
             filter["main_specialization"] = data.get("spec")
         if data.get("available"):
             filter["active"] = True
-        # filter = {"_id" : "c4ca06e2486e"}
         print(filter)
         resp = list(doctorsDb.find(filter))
         rd.shuffle(resp)
         if data.get("sortBy") == "nearest":
             points = findNearMe(resp, latitude, longitude)
         return JsonResponse(list(resp)[10 * (currPage - 1) : 10 * currPage], safe=False)
-
     else:
         cities = list(citiesDb.find())
         d = []
@@ -173,7 +167,7 @@ def searchData(requests):
         a = []
         for i in specs:
             a.append(i["specialization"])
-        resp = JsonResponse({"cities": d, "specs": a}, safe=False)
+        resp = JsonResponse({"status":1, "cities": d, "specs": a}, safe=False)
         resp["Access-Control-Allow-Headers"] = "*"
         return resp
 
@@ -205,7 +199,6 @@ from datetime import datetime
 def getDashboard(request, doc_id):
     ratings = list(ratingsDb.find({"doc_id": doc_id}))
     consult = list(consultDb.find({"doctor.user": doc_id, "completed": False}))
-    "05/24/2022, 05:38:18"
     res = []
     for i in consult:
         timediff = (

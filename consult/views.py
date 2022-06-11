@@ -132,7 +132,6 @@ def endConsult(request, apmt_id):
     user = request.user
     if request.method == "POST":
         data = json.loads(request.body)
-        print(data)
         apmt = list(consultDb.find({"_id": apmt_id}))[0]
         duration = data.get("duration")
         tech_ratings = {
@@ -146,7 +145,6 @@ def endConsult(request, apmt_id):
             "rating": max(1, min(int(data.get("doc_rating", 10)), 10), 1),
             "review": data.get("review"),
         }
-
         change = {
             "tech_ratings": tech_ratings,
             "duration": duration,

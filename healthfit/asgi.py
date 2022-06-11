@@ -19,7 +19,7 @@ django_asgi_app = get_asgi_application()
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 
-import videoconf.routing
+import healthfit.routing
 
 application = ProtocolTypeRouter(
     {
@@ -27,7 +27,7 @@ application = ProtocolTypeRouter(
         "http": django_asgi_app,
         # WebSocket chat handler
         "websocket": AuthMiddlewareStack(
-            URLRouter(videoconf.routing.websocket_urlpatterns)
+            URLRouter(healthfit.routing.websocket_urlpatterns)
         ),
     }
 )
