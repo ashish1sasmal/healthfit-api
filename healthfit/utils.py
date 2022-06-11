@@ -16,6 +16,7 @@ def login_required(func):
 
     return wrap
 
+
 def shield(func):
     @wraps(func)
     def wrap(request, *args, **kwargs):
@@ -24,5 +25,5 @@ def shield(func):
         except Exception as err:
             print(str(err))
             return JsonResponse({"status": -1, "msg": "Something went wrong"})
-    
+
     return wrap

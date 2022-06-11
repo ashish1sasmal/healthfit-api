@@ -9,5 +9,5 @@ urlpatterns = [
     path("dashboard/<str:doc_id>", views.getDashboard),
     path("update/<str:doc_id>/", views.updateDocStatus),
     path("reviews/<str:doc_id>/", views.getReviews),
-    path("search/get", views.getDoctorsByName)
+    path("search/get", views.getDoctorsByName),
 ]

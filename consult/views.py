@@ -48,16 +48,14 @@ def payments(request, apmt_id):
             data = {
                 "completed": False,
                 "active": True,
-                "start_time" : datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                "start_time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
             }
-            data["razorpay_order_id"    ] = razorpay_order_id
+            data["razorpay_order_id"] = razorpay_order_id
             consultDb.update_one(
                 {"_id": apmt_id},
-                {
-                    "$set": data
-                },
+                {"$set": data},
             )
-            data = consultDb.find({"_id" : apmt_id})
+            data = consultDb.find({"_id": apmt_id})
             print(data)
             return JsonResponse({"status": 1, "data": data[0]}, safe=False)
         else:
@@ -67,6 +65,7 @@ def payments(request, apmt_id):
     except Exception as err:
         print(str(err))
         return JsonResponse({"status": -1, "msg": "Payment not successful"}, safe=False)
+
 
 @csrf_exempt
 @login_required
@@ -83,16 +82,15 @@ def updateConsult(request, apmt_id):
                 data["doctor"] = doctor[0]
                 data.pop("doc_id")
             else:
-                return JsonResponse({"status": -1, "msg": "Doctor not found."}, safe=False)
+                return JsonResponse(
+                    {"status": -1, "msg": "Doctor not found."}, safe=False
+                )
         consultDb.update_one(
             {"_id": apmt_id},
-            {
-                "$set": data
-            },
+            {"$set": data},
         )
-        data = consultDb.find({"_id" : apmt_id})[0]
-        return JsonResponse({"status": 1, "data" : data}, safe=False)
-            
+        data = consultDb.find({"_id": apmt_id})[0]
+        return JsonResponse({"status": 1, "data": data}, safe=False)
 
 
 @csrf_exempt
@@ -104,7 +102,11 @@ def getApmtDetails(request, apmt_id):
     if res:
         return JsonResponse({"data": res[0], "status": 1}, safe=False)
     else:
-        return JsonResponse({"status": -1, "msg" : "Error occured while fetching appointment details."}, safe=False)
+        return JsonResponse(
+            {"status": -1, "msg": "Error occured while fetching appointment details."},
+            safe=False,
+        )
+
 
 @csrf_exempt
 @login_required
@@ -115,12 +117,13 @@ def startConsult(request):
         data = {
             "_id": appmt_id,
             "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
-            "completed" : False,
-            "active" : False,
-            "user" : request.user.get("_id")
+            "completed": False,
+            "active": False,
+            "user": request.user.get("_id"),
         }
         consultDb.insert_one(data)
         return JsonResponse({"status": 1, "data": data}, safe=False)
+
 
 @csrf_exempt
 @login_required
@@ -145,20 +148,17 @@ def endConsult(request, apmt_id):
         }
 
         change = {
-                    "tech_ratings": tech_ratings,
-                    "duration": duration,
-                    "completed": True,
-                    "end_time" :  datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-                }
-        if apmt.get("ended_by")==None:
+            "tech_ratings": tech_ratings,
+            "duration": duration,
+            "completed": True,
+            "end_time": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
+        }
+        if apmt.get("ended_by") == None:
             change["ended_by"] = user
-
 
         consultDb.update_one(
             {"_id": apmt.get("_id")},
-            {
-                "$set": change
-            },
+            {"$set": change},
         )
         ratingsDb.insert_one(doc_ratings)
         return JsonResponse({"status": 1}, safe=False)
@@ -172,35 +172,45 @@ def currentConsult(request):
     print(consults)
     return JsonResponse({"status": 1, "consults": consults}, safe=False)
 
+
 @login_required
 @shield
 @shield
 def allAppointments(request):
     doc_id = request.GET.get("doc_id")
     user_id = request.GET.get("user_id")
-    filter = {"active" : True}
+    filter = {"active": True}
     if doc_id:
         filter["doctor.user"] = doc_id
     if user_id:
         filter["user"] = user_id
     res = list(consultDb.find(filter))
     for i in res:
-        diff = (datetime.now() - datetime.strptime(i.get("start_time"), "%d/%m/%Y, %H:%M:%S"))
-        if diff.total_seconds()/60 > 30:
-            consultDb.update_one({"_id" : i["_id"]}, {"$set" : {"completed" : True}})
+        diff = datetime.now() - datetime.strptime(
+            i.get("start_time"), "%d/%m/%Y, %H:%M:%S"
+        )
+        if diff.total_seconds() / 60 > 30:
+            consultDb.update_one({"_id": i["_id"]}, {"$set": {"completed": True}})
     res = list(consultDb.find(filter))
     print(res)
-    return JsonResponse({"status" : 1, "data": res}, safe=False)
+    return JsonResponse({"status": 1, "data": res}, safe=False)
+
 
 from django.core.files.storage import FileSystemStorage
+
 
 @csrf_exempt
 @login_required
 @shield
 def uploadFile(request):
     if request.method == "POST":
-        myfile = request.FILES['my_file']
+        myfile = request.FILES["my_file"]
         fs = FileSystemStorage()
-        filename = fs.save("files/"+str(uuid.uuid4())[-12:]+"."+myfile.name.split(".")[-1], myfile)
+        filename = fs.save(
+            "files/" + str(uuid.uuid4())[-12:] + "." + myfile.name.split(".")[-1],
+            myfile,
+        )
         uploaded_file_url = os.environ.get("HOST", "/") + fs.url(filename)
-        return JsonResponse({"status" : 1, "link" : uploaded_file_url, "filename" : myfile.name})
+        return JsonResponse(
+            {"status": 1, "link": uploaded_file_url, "filename": myfile.name}
+        )

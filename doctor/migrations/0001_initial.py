@@ -15,22 +15,68 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Specialization',
+            name="Specialization",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('spec_name', models.CharField(choices=[('Dentist', 'Dentist'), ('Surgeon', 'Surgeon'), ('Nose, Throat & Ear', 'Nose, Throat & Ear'), ('Pediatrics', 'Pediatrics'), ('Orthopedics', 'Orthopedics')], max_length=40)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "spec_name",
+                    models.CharField(
+                        choices=[
+                            ("Dentist", "Dentist"),
+                            ("Surgeon", "Surgeon"),
+                            ("Nose, Throat & Ear", "Nose, Throat & Ear"),
+                            ("Pediatrics", "Pediatrics"),
+                            ("Orthopedics", "Orthopedics"),
+                        ],
+                        max_length=40,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Doctor',
+            name="Doctor",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('education', models.CharField(max_length=100)),
-                ('practicing_since', models.DateField()),
-                ('gender', models.CharField(choices=[('MALE', 'MALE'), ('FEMALE', 'FEMALE')], max_length=10)),
-                ('profile_pic', models.CharField(default='https://mpcthospital.in/wp-content/uploads/2019/02/doctor-profile-350x350.png', max_length=500)),
-                ('specialization', models.ManyToManyField(to='doctor.Specialization')),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='user_doctor', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("education", models.CharField(max_length=100)),
+                ("practicing_since", models.DateField()),
+                (
+                    "gender",
+                    models.CharField(
+                        choices=[("MALE", "MALE"), ("FEMALE", "FEMALE")], max_length=10
+                    ),
+                ),
+                (
+                    "profile_pic",
+                    models.CharField(
+                        default="https://mpcthospital.in/wp-content/uploads/2019/02/doctor-profile-350x350.png",
+                        max_length=500,
+                    ),
+                ),
+                ("specialization", models.ManyToManyField(to="doctor.Specialization")),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="user_doctor",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]
