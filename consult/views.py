@@ -208,7 +208,7 @@ def uploadFile(request):
             "files/" + str(uuid.uuid4())[-12:] + "." + myfile.name.split(".")[-1],
             myfile,
         )
-        uploaded_file_url = os.environ.get("HOST", "/") + fs.url(filename)
+        uploaded_file_url = os.environ.get("HOST_", "/") + fs.url(filename)
         return JsonResponse(
             {"status": 1, "link": uploaded_file_url, "filename": myfile.name}
         )
