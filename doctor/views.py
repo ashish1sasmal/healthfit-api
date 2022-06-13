@@ -131,8 +131,28 @@ from datetime import datetime
 @login_required
 @shield
 def getDashboard(request, doc_id):
-    ratings = list(ratingsDb.find({"doc_id": doc_id}))
-    consult = list(consultDb.find({"doctor.user": doc_id, "completed": False}))
+    doctor = checkDoc(doc_id)
+    print(doctor)
+    if not doctor:
+        return JsonResponse({"status": -1, "msg": "Doctor not found."})
+    ratings = list(ratingsDb.find({"doc_id": doctor["_id"]}))
+    consult = list(consultDb.find({"doctor._id":doctor["_id"], "completed": False}))
+    all_ratings = len(ratings)
+    all_consult = len(consult)
+    positive_reviews = 0
+    overall_rating = 0
+    positive_reviews_perc = 0
+    #overall rating calc
+    s = 0
+    if all_ratings>0:
+        for i in ratings:
+            s+=i["rating"]
+            if i["rating"]>7:
+                positive_reviews+=1
+        overall_rating = round(s/all_ratings, 1)
+        positive_reviews_perc = (positive_reviews/all_ratings)*100
+
+
     res = []
     for i in consult:
         timediff = (
@@ -144,11 +164,11 @@ def getDashboard(request, doc_id):
         else:
             consultDb.update_one({"_id": i["_id"]}, {"$set": {"completed": True}})
 
-    return JsonResponse({"status": 1, "ratings": ratings, "consult": res}, safe=False)
+    return JsonResponse({"status": 1, "ratings": ratings, "consult": res, "all_ratings":all_ratings, "all_consult":all_consult, "positive_reviews": positive_reviews, "overall_rating": overall_rating, "positive_reviews_perc":positive_reviews_perc}, safe=False)
 
 
 def checkDoc(doc_id):
-    res = doctorsDb.find({"_id": doc_id})
+    res = doctorsDb.find({"$or" : [{"_id": doc_id}, {"user": doc_id}]})
     if res:
         return res[0]
 
