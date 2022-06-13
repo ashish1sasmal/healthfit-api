@@ -30,6 +30,6 @@ import json
 # # doctorsDb.delete_many({})
 # print(c)
 
-f = open(f'doctors')
+f = open(f"doctors")
 data = json.load(f)
 doctorsDb.insert_many(data)

@@ -20,7 +20,13 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
         msg = data.get("msg")
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "message", "type_": type, "message": data["msg"], "from": from_},
+            {
+                "type": "message",
+                "type_": type,
+                "message": data["msg"],
+                "from": from_,
+                "link": data.get("link"),
+            },
         )
 
     async def message(self, event):
@@ -30,6 +36,7 @@ class ChatRoomConsumer(AsyncWebsocketConsumer):
                     "type": event["type_"],
                     "message": event["message"],
                     "from": event["from"],
+                    "link": event.get("link"),
                 }
             )
         )

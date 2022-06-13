@@ -6,17 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('doctor', '0001_initial'),
+        ("doctor", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='doctor',
-            name='specialization',
+            model_name="doctor",
+            name="specialization",
         ),
         migrations.AddField(
-            model_name='doctor',
-            name='specialization',
-            field=models.CharField(choices=[('Dentist', 'Dentist'), ('Surgeon', 'Surgeon'), ('Nose, Throat & Ear', 'Nose, Throat & Ear'), ('Pediatrics', 'Pediatrics'), ('Orthopedics', 'Orthopedics')], default=None, max_length=40),
+            model_name="doctor",
+            name="specialization",
+            field=models.CharField(
+                choices=[
+                    ("Dentist", "Dentist"),
+                    ("Surgeon", "Surgeon"),
+                    ("Nose, Throat & Ear", "Nose, Throat & Ear"),
+                    ("Pediatrics", "Pediatrics"),
+                    ("Orthopedics", "Orthopedics"),
+                ],
+                default=None,
+                max_length=40,
+            ),
         ),
     ]

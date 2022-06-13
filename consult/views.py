@@ -10,24 +10,16 @@ from datetime import datetime
 import os
 import requests
 
-from healthfit.utils import login_required
+from healthfit.utils import login_required, shield
 
 # Create your views here.
 
 
 @csrf_exempt
 @login_required
-def payments(request):
-    data = json.loads(request.body)
-    user = request.user
-    print(user)
-    print(data)
+@shield
+def payments(request, apmt_id):
     amount = 50000
-    name = data.get("name")
-    spec = data.get("spec")
-    mobile = data.get("mobile")
-    symptoms = data.get("symptoms")
-    doc_id = data.get("doc_id")
     currency = "INR"
     try:
         razorpay_client = razorpay.Client(
@@ -53,27 +45,19 @@ def payments(request):
                     "created_at": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
                 }
             )
-            print(resp)
-            appmt_id = str(uuid.uuid4())[-12:]
             data = {
-                "_id": appmt_id,
-                "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
-                "p_name": name,
-                "p_mobile": mobile,
-                "symptoms": symptoms,
-                "spec": spec,
-                "payment_id": pay_id,
-                "user_id": user.get("_id") if user else None,
                 "completed": False,
                 "active": True,
+                "start_time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
             }
-            if doc_id:
-                doc_details = doctorsDb.find({"_id": doc_id})
-                data["doctor"] = doc_details
             data["razorpay_order_id"] = razorpay_order_id
+            consultDb.update_one(
+                {"_id": apmt_id},
+                {"$set": data},
+            )
+            data = consultDb.find({"_id": apmt_id})
             print(data)
-            consultDb.insert_one(data)
-            return JsonResponse({"status": 1, "data": data}, safe=False)
+            return JsonResponse({"status": 1, "data": data[0]}, safe=False)
         else:
             return JsonResponse(
                 {"status": -1, "msg": "Payment not successful"}, safe=False
@@ -85,22 +69,69 @@ def payments(request):
 
 @csrf_exempt
 @login_required
+@shield
+def updateConsult(request, apmt_id):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        print(data)
+        doc_id = data.get("doc_id")
+        if data.get("doc_id"):
+            doctor = list(doctorsDb.find({"_id": doc_id}))
+            print(doctor)
+            if doctor:
+                data["doctor"] = doctor[0]
+                data.pop("doc_id")
+            else:
+                return JsonResponse(
+                    {"status": -1, "msg": "Doctor not found."}, safe=False
+                )
+        consultDb.update_one(
+            {"_id": apmt_id},
+            {"$set": data},
+        )
+        data = consultDb.find({"_id": apmt_id})[0]
+        return JsonResponse({"status": 1, "data": data}, safe=False)
+
+
+@csrf_exempt
+@login_required
+@shield
 def getApmtDetails(request, apmt_id):
     print(request.user)
     res = list(consultDb.find({"_id": apmt_id}))
     if res:
         return JsonResponse({"data": res[0], "status": 1}, safe=False)
     else:
-        return JsonResponse({"status": -1}, safe=False)
+        return JsonResponse(
+            {"status": -1, "msg": "Error occured while fetching appointment details."},
+            safe=False,
+        )
 
 
 @csrf_exempt
 @login_required
+@shield
+def startConsult(request):
+    if request.method == "POST":
+        appmt_id = str(uuid.uuid4())[-12:]
+        data = {
+            "_id": appmt_id,
+            "created_at": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
+            "completed": False,
+            "active": False,
+            "user": request.user.get("_id"),
+        }
+        consultDb.insert_one(data)
+        return JsonResponse({"status": 1, "data": data}, safe=False)
+
+
+@csrf_exempt
+@login_required
+@shield
 def endConsult(request, apmt_id):
     user = request.user
     if request.method == "POST":
         data = json.loads(request.body)
-        print(data)
         apmt = list(consultDb.find({"_id": apmt_id}))[0]
         duration = data.get("duration")
         tech_ratings = {
@@ -114,22 +145,18 @@ def endConsult(request, apmt_id):
             "rating": max(1, min(int(data.get("doc_rating", 10)), 10), 1),
             "review": data.get("review"),
         }
-
         change = {
-                    "tech_ratings": tech_ratings,
-                    "duration": duration,
-                    "completed": True,
-                    "end_time" :  datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-                }
-        if apmt.get("ended_by")==None:
+            "tech_ratings": tech_ratings,
+            "duration": duration,
+            "completed": True,
+            "end_time": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
+        }
+        if apmt.get("ended_by") == None:
             change["ended_by"] = user
-
 
         consultDb.update_one(
             {"_id": apmt.get("_id")},
-            {
-                "$set": change
-            },
+            {"$set": change},
         )
         ratingsDb.insert_one(doc_ratings)
         return JsonResponse({"status": 1}, safe=False)
@@ -137,20 +164,51 @@ def endConsult(request, apmt_id):
 
 @csrf_exempt
 @login_required
+@shield
 def currentConsult(request):
     consults = list(consultDb.find({"complete": False}))
     print(consults)
     return JsonResponse({"status": 1, "consults": consults}, safe=False)
 
+
 @login_required
+@shield
+@shield
 def allAppointments(request):
     doc_id = request.GET.get("doc_id")
     user_id = request.GET.get("user_id")
-    filter = {}
+    filter = {"active": True}
     if doc_id:
         filter["doctor.user"] = doc_id
     if user_id:
-        filter["user_id"] = user_id
+        filter["user"] = user_id
+    res = list(consultDb.find(filter))
+    for i in res:
+        diff = datetime.now() - datetime.strptime(
+            i.get("start_time"), "%d/%m/%Y, %H:%M:%S"
+        )
+        if diff.total_seconds() / 60 > 30:
+            consultDb.update_one({"_id": i["_id"]}, {"$set": {"completed": True}})
     res = list(consultDb.find(filter))
     print(res)
-    return JsonResponse({"status" : 1, "data": res}, safe=False)
+    return JsonResponse({"status": 1, "data": res}, safe=False)
+
+
+from django.core.files.storage import FileSystemStorage
+
+
+@csrf_exempt
+@login_required
+@shield
+def uploadFile(request):
+    if request.method == "POST":
+        myfile = request.FILES["my_file"]
+        fs = FileSystemStorage()
+        filename = fs.save(
+            "files/" + str(uuid.uuid4())[-12:] + "." + myfile.name.split(".")[-1],
+            myfile,
+        )
+        uploaded_file_url = os.environ.get("HOST_", "/") + fs.url(filename)
+        return JsonResponse(
+            {"status": 1, "link": uploaded_file_url, "filename": myfile.name}
+        )
