@@ -67,7 +67,8 @@ def searchData(requests):
         if data.get("doc_name"):
             filter["name"] = data.get("doc_name")
         if not data.get("nearBy"):
-            filter["clinic_details.city"] = data.get("city")
+            if data.get("city"):
+                filter["clinic_details.city"] = data.get("city")
         else:
             latitude = data.get("coordinates").get("latitude")
             longitude = data.get("coordinates").get("longitude")
