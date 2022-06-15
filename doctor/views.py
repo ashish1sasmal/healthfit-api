@@ -152,7 +152,7 @@ def getDashboard(request, doc_id):
             if i["rating"]>7:
                 positive_reviews+=1
         overall_rating = round(s/all_ratings, 1)
-        positive_reviews_perc = (positive_reviews/all_ratings)*100
+        positive_reviews_perc = round((positive_reviews/all_ratings)*100, 2)
 
 
     res = []
@@ -166,7 +166,7 @@ def getDashboard(request, doc_id):
         else:
             consultDb.update_one({"_id": i["_id"]}, {"$set": {"completed": True}})
 
-    return JsonResponse({"status": 1, "ratings": ratings, "consult": res, "all_ratings":all_ratings, "all_consult":all_consult, "positive_reviews": positive_reviews, "overall_rating": overall_rating, "positive_reviews_perc":positive_reviews_perc}, safe=False)
+    return JsonResponse({"status": 1, "ratings": ratings, "consult": res, "all_ratings":all_ratings, "all_consult":all_consult, "positive_reviews": positive_reviews, "overall_rating": overall_rating, "positive_reviews_perc":positive_reviews_perc, "ratings": ratings}, safe=False)
 
 
 def checkDoc(doc_id):
