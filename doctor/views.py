@@ -87,11 +87,12 @@ def searchData(requests):
             filter["main_specialization"] = data.get("spec")
         if data.get("available"):
             filter["active"] = True
-        print(filter)
-        resp = list(doctorsDb.find(filter))
-        rd.shuffle(resp)
-        if data.get("sortBy") == "nearest":
-            points = findNearMe(resp, latitude, longitude)
+        resp = []
+        if filter!={}:
+            resp = list(doctorsDb.find(filter))
+            rd.shuffle(resp)
+            if data.get("sortBy") == "nearest":
+                points = findNearMe(resp, latitude, longitude)
         return JsonResponse(list(resp)[10 * (currPage - 1) : 10 * currPage], safe=False)
     else:
         cities = list(citiesDb.find())

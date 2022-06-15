@@ -48,7 +48,7 @@ def payments(request, apmt_id):
             data = {
                 "completed": False,
                 "active": True,
-                "start_time": datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                "start_time": datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
             }
             data["razorpay_order_id"] = razorpay_order_id
             consultDb.update_one(
